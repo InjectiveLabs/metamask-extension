@@ -169,8 +169,15 @@ export default class MetamaskController extends EventEmitter {
 
     // token exchange rate tracker
     this.tokenRatesController = new TokenRatesController({
-      currency: this.currencyRateController,
       preferences: this.preferencesController.store,
+      onNetworkDidChange: this.networkController.on.bind(
+        this.networkController,
+        NETWORK_EVENTS.NETWORK_DID_CHANGE,
+      ),
+      getNativeCurrency: () => {
+        const { ticker } = this.networkController.getProviderConfig();
+        return ticker;
+      },
     });
 
     this.ensController = new EnsController({

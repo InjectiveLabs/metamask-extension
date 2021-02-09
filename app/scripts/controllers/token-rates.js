@@ -19,10 +19,17 @@ export default class TokenRatesController {
    *
    * @param {Object} [config] - Options to configure controller
    */
-  constructor({ currency, preferences } = {}) {
+  constructor({ preferences, onNetworkDidChange, getNativeCurrency } = {}) {
     this.store = new ObservableStore();
-    this.currency = currency;
-    this.preferences = preferences;
+    this.nativeCurrency = getNativeCurrency() ?? 'ETH';
+    this.tokens = preferences.getState().tokens;
+    preferences.subscribe(({ tokens = [] }) => {
+      this.tokens = tokens;
+    });
+    onNetworkDidChange(() => {
+      this.nativeCurrency = getNativeCurrency() ?? 'ETH';
+      this.updateExchangeRates();
+    });
   }
 
   /**
@@ -30,9 +37,7 @@ export default class TokenRatesController {
    */
   async updateExchangeRates() {
     const contractExchangeRates = {};
-    const nativeCurrency = this.currency
-      ? this.currency.state.nativeCurrency.toLowerCase()
-      : 'eth';
+    const nativeCurrency = this.nativeCurrency.toLowerCase();
     const pairs = this._tokens.map((token) => token.address).join(',');
     const query = `contract_addresses=${pairs}&vs_currencies=${nativeCurrency}`;
     if (this._tokens.length > 0) {
